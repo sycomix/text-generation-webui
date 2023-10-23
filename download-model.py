@@ -244,10 +244,13 @@ if __name__ == '__main__':
         with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
             f.write(f'url: https://huggingface.co/{model}\n')
             f.write(f'branch: {branch}\n')
-            f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
-            sha256_str = ''
-            for i in range(len(sha256)):
-                sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
+            f.write(
+                f'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+            )
+            sha256_str = ''.join(
+                f'    {sha256[i][1]} {sha256[i][0]}\n'
+                for i in range(len(sha256))
+            )
             if sha256_str != '':
                 f.write(f'sha256sum:\n{sha256_str}')
 

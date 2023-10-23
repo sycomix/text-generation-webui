@@ -17,8 +17,8 @@ class LlamaCppModel:
         self.initialized = False
 
     @classmethod
-    def from_pretrained(self, path):
-        result = self()
+    def from_pretrained(cls, path):
+        result = cls()
 
         params = {
             'model_path': str(path),
@@ -26,7 +26,7 @@ class LlamaCppModel:
             'seed': 0,
             'n_threads': shared.args.threads or None
         }
-        self.model = Llama(**params)
+        cls.model = Llama(**params)
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result

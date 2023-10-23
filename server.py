@@ -42,20 +42,29 @@ def get_available_models():
 
 
 def get_available_presets():
-    return sorted(set((k.stem for k in Path('presets').glob('*.txt'))), key=str.lower)
+    return sorted({k.stem for k in Path('presets').glob('*.txt')}, key=str.lower)
 
 
 def get_available_prompts():
     prompts = []
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('[0-9]*.txt'))), key=str.lower, reverse=True)
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('*.txt'))), key=str.lower)
+    prompts += sorted(
+        {k.stem for k in Path('prompts').glob('[0-9]*.txt')},
+        key=str.lower,
+        reverse=True,
+    )
+    prompts += sorted(
+        {k.stem for k in Path('prompts').glob('*.txt')}, key=str.lower
+    )
     prompts += ['None']
     return prompts
 
 
 def get_available_characters():
     paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower)
+    return ['None'] + sorted(
+        {k.stem for k in paths if k.stem != "instruction-following"},
+        key=str.lower,
+    )
 
 
 def get_available_instruction_templates():
@@ -63,7 +72,7 @@ def get_available_instruction_templates():
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths)), key=str.lower)
+    return ['None'] + sorted({k.stem for k in paths}, key=str.lower)
 
 
 def get_available_extensions():
@@ -71,7 +80,9 @@ def get_available_extensions():
 
 
 def get_available_softprompts():
-    return ['None'] + sorted(set((k.stem for k in Path('softprompts').glob('*.zip'))), key=str.lower)
+    return ['None'] + sorted(
+        {k.stem for k in Path('softprompts').glob('*.zip')}, key=str.lower
+    )
 
 
 def get_available_loras():
@@ -148,12 +159,11 @@ def save_prompt(text):
 def load_prompt(fname):
     if fname in ['None', '']:
         return ''
-    else:
-        with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
-            text = f.read()
-            if text[-1] == '\n':
-                text = text[:-1]
-            return text
+    with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
+        text = f.read()
+        if text[-1] == '\n':
+            text = text[:-1]
+        return text
 
 
 def create_prompt_menus():
@@ -576,7 +586,7 @@ def create_interface():
     if shared.args.gradio_auth_path is not None:
         gradio_auth_creds = []
         with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
-            for line in file.readlines():
+            for line in file:
                 gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
         auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
 

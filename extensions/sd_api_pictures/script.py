@@ -97,7 +97,7 @@ def input_modifier(string):
 
     global params
 
-    if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
+    if params['mode'] != 1:  # if not in immersive/interactive mode, do nothing
         return string
 
     if triggers_are_in(string):  # if we're in it, check for trigger words
@@ -105,7 +105,7 @@ def input_modifier(string):
         string = string.lower()
         if "of" in string:
             subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
+            string = f"Please provide a detailed and vivid description of {subject}"
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
 
@@ -144,7 +144,7 @@ def get_SD_pictures(description):
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
             image.save(output_file.as_posix())
-            visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
+            visible_result = f'{visible_result}<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
             image.thumbnail((300, 300))
@@ -152,8 +152,8 @@ def get_SD_pictures(description):
             image.save(buffered, format="JPEG")
             buffered.seek(0)
             image_bytes = buffered.getvalue()
-            img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
-            visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
+            img_str = f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode()}"
+            visible_result = f'{visible_result}<img src="{img_str}" alt="{description}">\n'
 
     if params['manage_VRAM']:
         give_VRAM_priority('LLM')
@@ -207,11 +207,7 @@ def bot_prefix_modifier(string):
 def toggle_generation(*args):
     global picture_response, shared, streaming_state
 
-    if not args:
-        picture_response = not picture_response
-    else:
-        picture_response = args[0]
-
+    picture_response = not picture_response if not args else args[0]
     shared.args.no_stream = True if picture_response else streaming_state  # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
 
@@ -221,7 +217,7 @@ def filter_address(address):
     # address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
     address = re.sub('\/$', '', address)  # remove trailing /s
     if not address.startswith('http'):
-        address = 'http://' + address
+        address = f'http://{address}'
     return address
 
 

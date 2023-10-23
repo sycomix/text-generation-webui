@@ -25,8 +25,7 @@ def generate_reply_wrapper(string):
     params = json.loads(string)
     for k in params[1]:
         generate_params[k] = params[1][k]
-    for i in generate_reply(params[0], generate_params):
-        yield i
+    yield from generate_reply(params[0], generate_params)
 
 
 def create_apis():

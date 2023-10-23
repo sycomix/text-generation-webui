@@ -21,7 +21,14 @@ CURRENT_GRADIENT_ACCUM = 1
 
 
 def get_dataset(path: str, ext: str):
-    return ['None'] + sorted(set([k.stem for k in Path(path).glob(f'*.{ext}') if k.stem != 'put-trainer-datasets-here']), key=str.lower)
+    return ['None'] + sorted(
+        {
+            k.stem
+            for k in Path(path).glob(f'*.{ext}')
+            if k.stem != 'put-trainer-datasets-here'
+        },
+        key=str.lower,
+    )
 
 
 def create_train_interface():
@@ -97,9 +104,7 @@ def clean_path(base_path: str, path: str):
     # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
     # Or swap it to a strict whitelist of [a-zA-Z_0-9]
     path = path.replace('\\', '/').replace('..', '_')
-    if base_path is None:
-        return path
-    return f'{Path(base_path).absolute()}/{path}'
+    return path if base_path is None else f'{Path(base_path).absolute()}/{path}'
 
 
 def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
@@ -172,11 +177,11 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         eval_data = None
 
     else:
-        if dataset in ['None', '']:
+        if dataset in {'None', ''}:
             yield "**Missing dataset choice input, cannot continue.**"
             return
 
-        if format in ['None', '']:
+        if format in {'None', ''}:
             yield "**Missing format choice input, cannot continue.**"
             return
 
@@ -185,7 +190,9 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 
         def generate_prompt(data_point: dict[str, str]):
             for options, data in format_data.items():
-                if set(options.split(',')) == set(x[0] for x in data_point.items() if len(x[1].strip()) > 0):
+                if set(options.split(',')) == {
+                    x[0] for x in data_point.items() if len(x[1].strip()) > 0
+                }:
                     for key, val in data_point.items():
                         data = data.replace(f'%{key}%', val)
                 return data
@@ -234,7 +241,6 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            # TODO: Should more of these be configurable? Probably.
             warmup_steps=100,
             num_train_epochs=epochs,
             learning_rate=actual_lr,
@@ -246,12 +252,13 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             save_steps=200,
             output_dir=lora_name,
             save_total_limit=3,
-            load_best_model_at_end=True if eval_data is not None else False,
-            # TODO: Enable multi-device support
-            ddp_find_unused_parameters=None
+            load_best_model_at_end=eval_data is not None,
+            ddp_find_unused_parameters=None,
         ),
-        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-        callbacks=list([Callbacks()])
+        data_collator=transformers.DataCollatorForLanguageModeling(
+            shared.tokenizer, mlm=False
+        ),
+        callbacks=[Callbacks()],
     )
 
     lora_model.config.use_cache = False
@@ -292,10 +299,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
                 total_time_estimate = 999
             else:
                 its = CURRENT_STEPS / time_elapsed
-                if its > 1:
-                    timer_info = f"`{its:.2f}` it/s"
-                else:
-                    timer_info = f"`{1.0/its:.2f}` s/it"
+                timer_info = f"`{its:.2f}` it/s" if its > 1 else f"`{1.0 / its:.2f}` s/it"
                 total_time_estimate = (1.0 / its) * (MAX_STEPS)
             yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
 

@@ -138,9 +138,12 @@ def load_quantized(model_name):
         if shared.args.gpu_memory:
             memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
             max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
-            max_memory = {}
-            for i in range(len(memory_map)):
-                max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+            max_memory = {
+                i: f'{memory_map[i]}GiB'
+                if not re.match('.*ib$', memory_map[i].lower())
+                else memory_map[i]
+                for i in range(len(memory_map))
+            }
             max_memory['cpu'] = max_cpu_memory
 
             device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
@@ -148,7 +151,6 @@ def load_quantized(model_name):
             # https://huggingface.co/docs/accelerate/package_reference/big_modeling#accelerate.dispatch_model
             model = accelerate.dispatch_model(model, device_map=device_map, offload_buffers=True)
 
-        # No offload
         elif not shared.args.cpu:
             model = model.to(torch.device('cuda:0'))
 
